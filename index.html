@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quét mã QR</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        #qr-reader {
+            margin: 0 auto;
+        }
+
+        #list-qr {
+            padding: 0;
+            list-style-type: none;
+        }
+
+        #list-qr li {
+            padding: 5px;
+            background-color: #f1f1f1;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <input type="file">
+    <button id="start-scan-btn">Quét</button>
+    <button id="start-scan-btn1">bat</button>
+    <div>
+        <ul id="list-qr"></ul>
+    </div>
+    <div id="qr-reader" style="width: 300px;"></div>
+
+    <h1 id="error"></h1>
+
+    <script>
+        let html5QrCode;
+        let objQr = [];
+        let show = document.getElementById('list-qr');
+        let error = document.getElementById('error');
+
+        function onScanSuccess(decodedText, decodedResult) {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    if (!objQr.includes(decodedText)) {
+                        objQr.push(decodedText);  // Thêm mã QR vào danh sách nếu chưa có
+                    }
+                    renderQrList();
+                }).catch(err => {
+                    error.innerText = "Không thể dừng quét: " + err;
+                    console.error("Unable to stop scanning: ", err);
+                });
+            }
+        }
+
+        function renderQrList() {
+            show.innerHTML = ''; // Xóa danh sách cũ
+            objQr.forEach((item) => {
+                let listItem = document.createElement('li');
+                listItem.textContent = item;
+                show.appendChild(listItem);
+            });
+        }
+
+        function onScanError(errorMessage) {
+            console.warn(`QR Code scan error: ${errorMessage}`);
+        }
+        document.getElementById("start-scan-btn1").addEventListener("click", function () {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                console.log("Camera supported by the browser");
+            } else {
+                 error.innerText = "Không thể khởi động quét: ";
+            }
+        });
+
+        document.getElementById("start-scan-btn").addEventListener("click", function () {
+            if (html5QrCode) {
+                html5QrCode.clear();  // Clear trước nếu đã sử dụng
+            }
+            html5QrCode = new Html5Qrcode("qr-reader");
+
+            html5QrCode.start(
+                { facingMode: "environment" }, // Sử dụng camera sau của thiết bị
+                {
+                    fps: 10,    // Số lần quét trên giây
+                    qrbox: { width: 250, height: 250 }  // Kích thước hộp quét QR
+                },
+                onScanSuccess,
+                onScanError
+            ).catch(err => {
+                error.innerText = "Không thể khởi động quét: " + err;
+                console.error("Unable to start scanning:", err);
+            });
+        });
+    </script>
+</body>
+
+</html>
